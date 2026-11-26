@@ -101,10 +101,10 @@ namespace IdentityServer
                     .ToArray());
             services.AddOpenIddict().AddServer(options =>
             {
-                // Signing lets clients verify that tokens came from this server. Encryption lets
-                // this server protect values such as authorization codes until they are redeemed.
-                // Persistent keys keep previously issued tokens verifiable across restarts.
-                // Outstanding authorization codes belong to the process that issued them.
+                // Signing lets clients verify that tokens came from this server. Encryption keeps the
+                // claims inside authorization codes and access tokens private to this server.
+                // Persistent keys keep tokens issued before a restart verifiable and readable.
+                // Authorization codes do not survive a restart: only the host that issued a code can redeem it.
                 if (configuration.GetValue<bool>("IdentityServer:PersistKeys"))
                     options.AddSigningKey(TokenKeyStore.LoadOrCreate(configuration, "signing-key"))
                            .AddEncryptionKey(TokenKeyStore.LoadOrCreate(configuration, "encryption-key"));

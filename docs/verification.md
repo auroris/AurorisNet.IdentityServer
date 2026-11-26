@@ -89,7 +89,8 @@ pull request and before a release. They cover:
   group queries for Active Directory, Samba AD and FreeIPA against a fake directory. On Linux,
   the StartTLS sequence against a local LDAP listener.
 - **Sign-in.** The authorization code flow with PKCE through OpenIddict with a simulated
-  identity, also behind a proxy prefix.
+  identity, also behind a proxy prefix. A code that stays usable after a failed exchange and is
+  refused after a successful one.
 - **Token keys.** Persistence, wrong passwords and mismatched formats.
 - **The people lookup.** Query splitting, global-scope limits, filter escaping, identifier
   parsing, application filters and the records' JSON. The tests that parse SIDs run on Windows

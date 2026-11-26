@@ -94,7 +94,9 @@ server at `https://identity.example.com` and an application at `https://app.exam
 ## Create the IIS site
 
 1. **Application pool.** Create a pool named `IdentityServer` with **No Managed Code** and the
-   identity you chose. Use one pool for each IdentityServer instance.
+   identity you chose. Use one pool for each IdentityServer instance, and keep its **Maximum
+   Worker Processes** at 1, the default: the worker process that issues a code is the one that
+   redeems it.
 2. **Site.** Create a site bound to `https://identity.example.com:443` with your certificate,
    the physical path `C:\Sites\IdentityServer` and that pool. To host under an existing site,
    see [Hosting as a sub-application](#hosting-as-a-sub-application).

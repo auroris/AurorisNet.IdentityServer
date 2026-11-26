@@ -70,6 +70,10 @@ sign-in and arrives without a verified principal gets `403`.
 
 ## Limits to plan for
 
+- One server process serves each issuer. It keeps the outstanding codes in memory, so the
+  process that issues a code is the one that redeems it. Run a single instance, with one worker
+  process in an IIS application pool. A second instance behind a load balancer would refuse the
+  codes the first one issued.
 - The server reads direct group memberships only. Nested groups and the Active Directory primary
   group produce no role.
 - Browsers send a ticket only to a hostname they trust for integrated authentication. Chrome,

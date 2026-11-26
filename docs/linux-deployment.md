@@ -16,8 +16,9 @@ steps set up. [Directory providers](kerberos-and-ldap.md) describes each directo
 | Apache | mod_auth_gssapi reads the keytab. The server uses `ProxyKerberos`. | `https://identity.example.com/IdentityServer` | [Apache](apache-and-nginx.md#apache) |
 | Nginx | The SPNEGO module reads the keytab. The server uses `ProxyKerberos`. | `https://identity.example.com/IdentityServer` | [Nginx](apache-and-nginx.md#nginx) |
 
-Use one arrangement for a public hostname. In the proxy arrangements, Kestrel listens on
-`127.0.0.1:5080` only, and the proxy terminates HTTPS and authenticates the browser.
+Use one arrangement for a public hostname, served by one IdentityServer service: the process
+that issues an authorization code is the one that redeems it. In the proxy arrangements, Kestrel
+listens on `127.0.0.1:5080` only, and the proxy terminates HTTPS and authenticates the browser.
 
 A Negotiate exchange belongs to one TCP connection. A generic HTTP proxy that pools connections
 in front of native Kestrel breaks it, so use the authenticating proxy templates.

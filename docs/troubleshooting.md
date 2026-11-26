@@ -35,7 +35,9 @@ Messages in the order a sign-in produces them:
 | `Authorization claims prepared` | Information | The claims are ready and OpenIddict builds the response. |
 | `Authorization denied for user ... during ...` | Warning | The person authenticated, and the directory lookup refused the identity: another realm, a name with no realm, no account or several accounts, or an account with no SID or `ipaUniqueID`. The application receives `access_denied`. |
 | `Error building authorization claims ... during ...` | Error | An exception, with the stage it happened in: usually connectivity, certificate trust, a failed bind or an invalid `Groups` pattern. The application receives `server_error`. |
+| `Authorization code could not be recorded` | Error | The server could not track a new code for single use, so it issued none. The application receives `server_error`. The message names the causes. |
 | `Token request rejected` | Warning | The application's `client_id` or `client_secret` is wrong at the token endpoint. |
+| `Authorization code refused` | Warning | The token request carried a code that this server process does not hold as outstanding: the code was already exchanged, or an earlier run or another process issued it. The application receives `invalid_grant`. The message names the client, the caller's address and the subject the code was issued for. |
 | `Token endpoint response sizes` | Debug | The lengths of the tokens, to diagnose oversized headers. |
 
 ## Startup problems
@@ -139,9 +141,12 @@ the check and the host.
 
 **The application receives a code, but the token request fails.**
 The request must carry the `client_id`, the exact callback URL and the PKCE verifier of the
-authorization request, and a confidential client's `client_secret`. The code must not have
-expired, and the server must still hold the keys that protected it: a restart without persisted
-keys invalidates the code. When the log shows no token request, look at the application's network
+authorization request, and a confidential client's `client_secret`. The application exchanges
+the code once, before it expires, with the server process that issued it. A second exchange, or
+an exchange after the server restarted, gets `invalid_grant`, and the log shows
+`Authorization code refused`: start a new sign-in. When the refusals recur and the server has
+not restarted, check that one process serves the issuer and that the application sends each
+token request once. When the log shows no token request, look at the application's network
 errors and at CORS.
 
 **Tokens issued before a restart fail afterwards.**

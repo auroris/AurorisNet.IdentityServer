@@ -64,6 +64,30 @@ public sealed class SignInTests
         Assert.True(profiles.IncludedGroups);
     }
 
+    [Fact]
+    public async Task AuthorizationCode_SurvivesAFailedExchange_ThenRedeemsOnce()
+    {
+        using var host = CreateHost("ActiveDirectory", "Kerberos", new TestProfiles("S-1-5-21-1-2-3-1001"));
+        using var client = host.CreateClient(new() { AllowAutoRedirect = false });
+        using var authorization = await client.GetAsync(AuthorizeUrl(), TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.Redirect, authorization.StatusCode);
+        string code = QueryHelpers.ParseQuery(authorization.Headers.Location!.Query)["code"].ToString();
+        Assert.NotEmpty(code);
+
+        // A request that fails validation leaves the code for the client that holds the verifier.
+        using var wrongVerifier = await Exchange(client, code, new string('x', Verifier.Length));
+        Assert.Equal(HttpStatusCode.BadRequest, wrongVerifier.StatusCode);
+        using var first = await Exchange(client, code, Verifier);
+        Assert.Equal(HttpStatusCode.OK, first.StatusCode);
+
+        // The same request is refused once the code has been exchanged.
+        using var second = await Exchange(client, code, Verifier);
+        Assert.Equal(HttpStatusCode.BadRequest, second.StatusCode);
+        var refusal = await second.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: TestContext.Current.CancellationToken);
+        Assert.Equal("invalid_grant", refusal.GetProperty("error").GetString());
+        Assert.False(refusal.TryGetProperty("id_token", out _));
+    }
+
     [Theory]
     [InlineData("NTLM")]
     [InlineData("Negotiate")]
@@ -138,6 +162,13 @@ public sealed class SignInTests
         ["scope"] = "openid profile email roles", ["nonce"] = "test-nonce", ["state"] = "test-state",
         ["code_challenge_method"] = "S256", ["code_challenge"] = Base64UrlEncoder.Encode(SHA256.HashData(Encoding.ASCII.GetBytes(Verifier)))
     });
+
+    private static Task<HttpResponseMessage> Exchange(HttpClient client, string code, string verifier) =>
+        client.PostAsync("/connect/token", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["grant_type"] = "authorization_code", ["client_id"] = "test-client", ["redirect_uri"] = Callback,
+            ["code"] = code, ["code_verifier"] = verifier
+        }), TestContext.Current.CancellationToken);
 
     private sealed class TestProfiles(string subject) : IUserProfileProvider
     {
