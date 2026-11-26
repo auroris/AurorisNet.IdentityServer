@@ -76,8 +76,8 @@ server at `https://identity.example.com` and an application at `https://app.exam
 
 - **`ServerUri`** is the issuer that applications see in tokens. Use the public HTTPS address.
 - **`PersistKeys` and `DataPath`** keep the token keys through an application pool recycle, so
-  tokens and unexpired codes stay valid. The files are protected with machine-scoped DPAPI: only
-  this server can read them.
+  issued tokens can still be validated. A sign-in interrupted by a recycle needs a fresh code.
+  Machine-scoped DPAPI protects the files on this server.
 - **`Hosts`** lists where sign-in results may be sent. **The redirect check compares the hostname
   only.**
 - **`Clients`** lists the applications that may request sign-in. Add a `ClientSecret` for a
@@ -182,8 +182,8 @@ domain-joined workstation:
 2. A sign-in with a registered client completes without a prompt, and the log shows
    `Authorization claims prepared`.
 3. The application receives the subject, name, email and the expected roles.
-4. The two key files exist under `DataPath`, and a code issued before an application pool
-   recycle can be redeemed after it.
+4. The two key files exist under `DataPath`, the published signing key survives an application
+   pool recycle, and a fresh sign-in succeeds.
 
 ## Updating
 

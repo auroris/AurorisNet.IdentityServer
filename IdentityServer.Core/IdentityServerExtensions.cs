@@ -74,7 +74,7 @@ public static class IdentityServerExtensions
             identityOptions.Authentication, identityOptions.Provider);
 
         if (!persistKeys)
-            logger.LogWarning("IdentityServer:PersistKeys is false: signing and encryption keys are regenerated at startup. Previously issued tokens may fail validation and outstanding authorization codes cannot be redeemed after a restart. Set PersistKeys to true to reuse keys on this machine.");
+            logger.LogWarning("IdentityServer:PersistKeys is false: signing and encryption keys are regenerated at startup. Previously issued tokens may fail validation. Set PersistKeys to true to reuse keys on this machine.");
         else if (string.IsNullOrEmpty(configuration["IdentityServer:KeyProtectionPassword"]))
             logger.LogInformation("IdentityServer:PersistKeys is true: signing and encryption keys are stored on disk using Windows machine protection. Preserve the key files across deployments; copying them to another machine does not make them usable there.");
         else

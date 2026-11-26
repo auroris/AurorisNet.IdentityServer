@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.IdentityModel.Tokens;
 using OpenIddict.Abstractions;
+using OpenIddict.Server;
 using System;
 using System.Linq;
 using System.Security.Claims;
@@ -80,6 +81,8 @@ namespace IdentityServer
         /// <param name="configuration">The consuming application's configuration.</param>
         public static void Add(IServiceCollection services, IConfiguration configuration)
         {
+            services.TryAddSingleton(TimeProvider.System);
+            services.TryAddSingleton<OutstandingAuthorizationCodes>();
             // The authorization handler below resolves these, so a host calling Add without AddIdentityServer needs them too.
             services.TryAddSingleton(_ => IdentityProviderOptions.Read(configuration));
             services.TryAddSingleton<IUserProfileProvider>(provider =>
@@ -100,8 +103,8 @@ namespace IdentityServer
             {
                 // Signing lets clients verify that tokens came from this server. Encryption lets
                 // this server protect values such as authorization codes until they are redeemed.
-                // Reusing both keys across restarts preserves those relationships; fresh keys can
-                // invalidate existing tokens and make outstanding codes unreadable.
+                // Persistent keys keep previously issued tokens verifiable across restarts.
+                // Outstanding authorization codes belong to the process that issued them.
                 if (configuration.GetValue<bool>("IdentityServer:PersistKeys"))
                     options.AddSigningKey(TokenKeyStore.LoadOrCreate(configuration, "signing-key"))
                            .AddEncryptionKey(TokenKeyStore.LoadOrCreate(configuration, "encryption-key"));
@@ -129,6 +132,15 @@ namespace IdentityServer
                 // With no OpenIddict stores, our handlers below must validate configured clients
                 // and redirect destinations. Degraded mode does not mean validation is optional.
                 options.EnableDegradedMode();
+                options.AddEventHandler<ProcessSignInContext>(builder => builder
+                    .AddFilter<OpenIddictServerHandlerFilters.RequireAuthorizationCodeGenerated>()
+                    .UseSingletonHandler<RegisterAuthorizationCode>()
+                    .SetOrder(OpenIddictServerHandlers.GenerateAuthorizationCode.Descriptor.Order + 1));
+                // This stage follows request validation (including client credentials and PKCE)
+                // and precedes token generation, just like OpenIddict's database-backed redemption.
+                options.AddEventHandler<ProcessSignInContext>(builder => builder
+                    .UseSingletonHandler<RedeemAuthorizationCode>()
+                    .SetOrder(OpenIddictServerHandlers.RedeemTokenEntry.Descriptor.Order));
                 // Permit HTTP deployments. This does not encrypt traffic or
                 // relax a client application's HTTPS requirements; HTTPS belongs in the host/proxy.
                 options.UseAspNetCore()

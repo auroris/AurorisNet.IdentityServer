@@ -119,7 +119,7 @@ Settings live in the `IdentityServer` section of `appsettings.json`.
 | `Hosts` | none | Origins that may receive sign-in results and call the token endpoint from a browser. **The redirect check compares the hostname only.** With no entries, every authorization request is rejected. |
 | `Clients` | none | The applications that may request sign-in: a `ClientId` and, for a confidential client, a `ClientSecret`. **With no entries, any client ID is accepted.** |
 | `Groups` | none | Regular expressions matched against the common names of a person's direct groups. Each match becomes a `role` claim. |
-| `PersistKeys` | `false` | Keeps the signing and encryption keys across restarts. With `false`, each start creates new keys, and codes and tokens issued earlier stop working. |
+| `PersistKeys` | `false` | Keeps signing and encryption keys across restarts so previously issued tokens can still be validated. Outstanding authorization codes always expire when their issuer process exits. |
 | `DataPath` | `keys` in the application folder | The folder that holds the two key files. |
 | `KeyProtectionPassword` | none | Encrypts the key files with a password. Required on Linux. Windows uses machine-scoped DPAPI when it is omitted. |
 | `AccessTokenLifetime`, `IdentityTokenLifetime`, `AuthorizationCodeLifetime` | OpenIddict's defaults | Lifetimes as `hours:minutes:seconds`. |

@@ -18,7 +18,7 @@ authentication.
 | Sign in from a registered application, or from the debugger below, with `openid profile email roles`. | Browser authentication, the directory read and the return to the application work. The log shows `Authorization claims prepared`. |
 | Read the claims the application received. | The subject is the SID or the `ipaUniqueID`, the email is right, and the roles are the direct groups that match your patterns. A group reached only through a nested group is absent. |
 | Sign in as a second user, and try once from a session with no ticket. | Each request gets its own identity. The attempt with no ticket gets a challenge and no token. |
-| With `PersistKeys` on: check that both key files exist under `DataPath`, restart, and redeem a code issued just before the restart. | The keys persist and the service can read them. |
+| With `PersistKeys` on, check both key files under `DataPath` and compare the published JWKS before and after restart. Complete a fresh sign-in. | The signing key stays the same and the new process can issue and redeem a fresh code. |
 | On Linux or behind a proxy, run the platform checks too. | [Browser sign-in on Linux](linux-deployment.md#9-verify-kerberos-and-browser-sso) and [proxy verification](apache-and-nginx.md#verification). |
 
 ## Checking a sign-in with oidcdebugger.com

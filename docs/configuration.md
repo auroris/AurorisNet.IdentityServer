@@ -94,9 +94,8 @@ another.
 | `DataPath` | `keys` in the application folder | The folder that holds the two key files. The process needs read and write access. |
 | `KeyProtectionPassword` | none | Selects how the key files are protected. See below. |
 
-**Set `PersistKeys` to `true` on every production server.** After a restart with new keys, a
-code issued earlier cannot be redeemed, and an application that cached the old signing key
-rejects new tokens until it reads the JWKS again.
+**Set `PersistKeys` to `true` on every production server.** An application that cached the old
+signing key rejects tokens signed with a new key until it reads the JWKS again.
 
 Choose an absolute `DataPath` outside the application folder so that an update of the
 application keeps the keys.
@@ -123,8 +122,11 @@ Each value uses `hours:minutes:seconds`. Omit a setting to use OpenIddict's defa
 | `IdentityTokenLifetime` | `01:00:00` | How long the application may rely on the ID token. The application's session cookie has its own lifetime. |
 | `AuthorizationCodeLifetime` | `00:05:00` | How long the application has to redeem a code. |
 
-**Keep the code lifetime short and use PKCE.** The server stores no record of redeemed codes, so
-a code stays redeemable until it expires.
+Each authorization code can be exchanged once, in the issuer process that created it. The
+process keeps a fingerprint and expiry in memory, consumes the entry before issuing tokens,
+and sweeps expired entries every minute. Restarting the process drops outstanding codes.
+If a code expires or the issuer restarts during sign-in, start a new sign-in. Use one issuer
+process for both endpoints. This requires no database or cache configuration.
 
 The server issues no refresh tokens. When a token expires, the application starts a new sign-in,
 which completes without a prompt for a browser that holds a ticket.

@@ -34,7 +34,7 @@ fresh tokens. IdentityServer keeps no sign-in session of its own.
 | The token keys | IdentityServer | The signing key lets applications verify tokens. The encryption key protects authorization codes and access tokens. |
 
 Each one fails separately, so verify each one separately: complete a browser sign-in, read a
-directory profile, and redeem a code after a restart. [Verification](verification.md) gives the
+directory profile, and check the published signing key after a restart. [Verification](verification.md) gives the
 steps.
 
 Proxy hosting adds a shared secret, which lets the server trust the identity header the proxy
@@ -43,14 +43,14 @@ sends. [Apache and Nginx](apache-and-nginx.md#backend-trust) explains that trust
 ## What the server stores
 
 - **Token keys.** With `PersistKeys` on, the server writes two key files under `DataPath`. These
-  files and the logs are all the data it keeps.
+  files and the logs are the data it keeps on disk.
 - **Nothing about people.** Each sign-in opens a directory connection, reads the current profile
   and closes the connection. A group change takes effect at the person's next sign-in. Tokens
   issued earlier keep their claims until they expire.
-- **Nothing about tokens.** OpenIddict runs without a database (its degraded mode), so codes and
-  tokens are self-contained. The server cannot revoke a token or mark a code as used. Choose
-  lifetimes that limit how long an issued token stays valid, keep the code lifetime short, and
-  configure clients to use PKCE.
+- **Outstanding authorization codes.** OpenIddict runs in degraded mode. Each issuer process
+  tracks its own unexpired codes in memory and consumes each code once. A later exchange receives
+  `invalid_grant`. Previously issued tokens remain valid until expiry, and the application
+  manages its own session.
 - **No refresh tokens.** When a token expires, the application starts a new sign-in, which
   completes without a prompt for a browser that holds a ticket.
 

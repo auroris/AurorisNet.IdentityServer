@@ -570,9 +570,8 @@ service. A bind account with a password needs none of this.
    the publish output carries the repository's demonstration clients and hosts.
 3. Keep `/var/lib/identityserver` and the key-protection password. **Do not delete key files to
    get past a startup failure.** Check the password, the file format and the permissions first.
-4. Start the service, read the journal, check discovery and complete a sign-in. Check that the
-   signing keys in the JWKS are unchanged and that a code issued before the restart, and not yet
-   expired, can be redeemed.
+4. Start the service, read the journal and check that discovery publishes the same signing keys
+   in the JWKS. Complete a fresh sign-in.
 5. Rotate service-account keys, keytabs and the read password together with the settings that
    use them. Update every front server that shares an HTTP principal at the same time. Renew the
    HTTPS certificate separately, and reload or restart the process that reads it. Keep the
@@ -597,7 +596,7 @@ service. A bind account with a password needs none of this.
 | The proxy returns 502, connection refused | Check that the service listens on `127.0.0.1:5080` and that the proxy uses that port. Read the service journal. |
 | The backend returns 403, the issuer is wrong or the prefix is missing | Check the shared secret, `KnownProxies`, the forwarded host and scheme, and that `ServerUri`, `PathBase` and the proxy's path mapping agree. See [Backend trust](apache-and-nginx.md#backend-trust). |
 | Roles are empty | The application must request `roles`. The `Groups` patterns must match group common names. The membership must be direct. Restart after a settings change. |
-| Codes stop working after a restart | Keep the token keys and their password. Check `PersistKeys`, `DataPath` and the folder's owner. An expired code stays invalid. |
+| A sign-in was interrupted by a restart | Start a fresh sign-in. Each issuer process keeps its own outstanding codes in memory. |
 
 Read `journalctl -u identityserver`, the files in `/opt/identityserver/logs/` and the proxy's
 error log. **Never share authorization URLs that carry a code or token, raw authentication

@@ -44,6 +44,8 @@ public sealed class SignInTests
         Assert.False(query.ContainsKey("error"), authorization.Headers.Location.ToString());
         string code = query["code"].ToString();
         Assert.NotEmpty(code);
+        var outstanding = host.Services.GetRequiredService<OutstandingAuthorizationCodes>();
+        Assert.False(outstanding.TryAdd(code, DateTimeOffset.UtcNow.AddMinutes(5)));
 
         using var token = await client.PostAsync("/connect/token", new FormUrlEncodedContent(new Dictionary<string, string>
         {
@@ -51,6 +53,7 @@ public sealed class SignInTests
             ["code"] = code, ["code_verifier"] = Verifier
         }), TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, token.StatusCode);
+        Assert.False(outstanding.TryRedeem(code));
         Assert.Empty(token.Headers.WwwAuthenticate);
         var response = await token.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: TestContext.Current.CancellationToken);
         var jwt = new JsonWebToken(response.GetProperty("id_token").GetString()!);
